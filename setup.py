@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setuptools.setup(
     name="merkletreepy",
-    version="0.0.1",
+    version="0.0.2",
     author="Callista Chang",
     author_email="changcallista@gmail.com",
     description="Python port of merkletreejs",

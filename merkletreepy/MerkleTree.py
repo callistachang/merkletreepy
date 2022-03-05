@@ -1,17 +1,43 @@
 from typing import List, Any, Callable, Dict, Optional
+from hexbytes import HexBytes
+
+# import inspect
 
 
 class MerkleTree:
-    def __init__(self, leaves: List[Any], hash_function: Callable) -> None:
-        self.hash_function = hash_function
+    def __init__(self, leaves: List[Any], hash_function: Callable, sort: Optional[bool] = False) -> None:
+        self.hash_function = self.bufferify_function(hash_function)
         self.leaves = leaves
+        self.sort_leaves = sort
+        self.sort_pairs = sort
         self._process_leaves()
 
     @staticmethod
-    def to_hex(value):
-        return "0x" + value
+    def to_hex(value: Any) -> str:
+        # return "0x" + value
+        # return value.hex()
+        # return "0x" + value
+        return value.hex()
+
+    @staticmethod
+    def bufferify(value: str) -> str:
+        # return value.replace("0x", "")
+        if type(value) == bytes:
+            return value
+        else:
+            value.encode()
+
+    @staticmethod
+    def bufferify_function(func: Callable) -> Callable:
+        def f(val):
+            return MerkleTree.bufferify(func(val))
+
+        return f
 
     def _process_leaves(self) -> None:
+        self.leaves = [self.bufferify(leaf) for leaf in self.leaves]
+        if self.sort_leaves:
+            self.leaves.sort()
         self.layers = [self.leaves]
         self._create_hashes(self.leaves)
 
@@ -26,19 +52,29 @@ class MerkleTree:
                     continue
                 left = nodes[i]
                 right = left if i + 1 == n else nodes[i + 1]
-                combined = self.to_hex(left + right)
-                hash = self.hash_function(combined)
-                self.layers[layer_index].append(hash)
+                combined = left + right if not (self.sort_pairs and right > left) else right + left
+                hashed_data = self.hash_function(combined)
+                self.layers[layer_index].append(hashed_data)
             nodes = self.layers[layer_index]
 
-    def get_root(self) -> List[Any]:
+    def get_hex_layers(self) -> List[str]:
+        return [[self.to_hex(leaf) for leaf in layer] for layer in self.layers]
+
+    def get_root(self) -> str:
         try:
             return self.layers[-1][0]
         except IndexError:
             return []
 
+    def get_hex_root(self) -> str:
+        if self.get_root():
+            return self.to_hex(self.get_root())
+        else:
+            return []
+
     def get_proof(self, leaf: str, index: Optional[int] = None) -> List[Dict[str, Any]]:
         proof = []
+        leaf = self.bufferify(leaf)
         if not index:
             try:
                 index = self.leaves.index(leaf)
@@ -58,21 +94,19 @@ class MerkleTree:
             index = index // 2
         return proof
 
-    def get_hex_proof(self, leaf: str, index: int) -> List[str]:
-        return [self.to_hex(item) for item in self.get_proof(leaf, index)]
+    def get_hex_proof(self, leaf: str, index: Optional[int] = 0) -> List[str]:
+        return [self.to_hex(item["data"]) for item in self.get_proof(leaf, index)]
 
     def verify(self, proof: List[Dict[str, str]], target_node: str, root: str) -> bool:
-        hash = target_node
+        hash = self.bufferify(target_node)
+        root = self.bufferify(root)
         for node in proof:
-            data = node["data"]
+            data = self.bufferify(node["data"])
             is_left_node = node["position"] == "left"
-            buffers = []
-            buffers.append(hash)
-            if is_left_node:
-                buffers.insert(data, 0)
+            if self.sort_pairs:
+                combined = data + hash if data <= hash else hash + data
             else:
-                buffers.append(data)
-            combined = self.to_hex("".join(buffers))
+                combined = data + hash if is_left_node else hash + data
             hash = self.hash_function(combined)
         return hash == root
 
