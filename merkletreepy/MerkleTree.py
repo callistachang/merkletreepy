@@ -1,11 +1,11 @@
 from typing import List, Any, Callable, Dict, Optional
 from hexbytes import HexBytes
 
-# import inspect
-
 
 class MerkleTree:
-    def __init__(self, leaves: List[Any], hash_function: Callable, sort: Optional[bool] = False) -> None:
+    def __init__(
+        self, leaves: List[Any], hash_function: Callable, sort: Optional[bool] = False
+    ) -> None:
         self.hash_function = self.bufferify_function(hash_function)
         self.leaves = leaves
         self.sort_leaves = sort
@@ -14,18 +14,14 @@ class MerkleTree:
 
     @staticmethod
     def to_hex(value: Any) -> str:
-        # return "0x" + value
-        # return value.hex()
-        # return "0x" + value
         return value.hex()
 
     @staticmethod
     def bufferify(value: str) -> str:
-        # return value.replace("0x", "")
         if type(value) == bytes:
             return value
         else:
-            value.encode()
+            return value.encode()
 
     @staticmethod
     def bufferify_function(func: Callable) -> Callable:
@@ -50,9 +46,13 @@ class MerkleTree:
                 if n == i + 1 and n % 2 == 1:
                     self.layers[layer_index].append(nodes[i])
                     continue
-                left = nodes[i]
-                right = left if i + 1 == n else nodes[i + 1]
-                combined = left + right if not (self.sort_pairs and right > left) else right + left
+                left = self.bufferify(nodes[i])
+                right = left if i + 1 == n else self.bufferify(nodes[i + 1])
+                combined = (
+                    left + right
+                    if not (self.sort_pairs and right > left)
+                    else right + left
+                )
                 hashed_data = self.hash_function(combined)
                 self.layers[layer_index].append(hashed_data)
             nodes = self.layers[layer_index]
