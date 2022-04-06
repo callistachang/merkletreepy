@@ -16,5 +16,5 @@ jobs:
 
       - name: Run tests
         run: |
-          pip install pytest merkletreepy
+          pip install pytest merkletreepy web3
           pytest .

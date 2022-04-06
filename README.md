@@ -8,7 +8,7 @@
 
 # MerkleTree.py
 
-> A Python port of merkletreejs. _:warning: Currently super unstable and doesn't work for many cases yet. :warning:_
+> A Python port of merkletreejs. _:warning: Currently EXTREMELY unstable and doesn't work for many cases yet. :warning:_
 
 [![PyPI version](https://badge.fury.io/py/merkletreepy.svg)](https://badge.fury.io/py/merkletreepy)
 
@@ -34,25 +34,6 @@ tree = MerkleTree(leaves, sha256)
 root = tree.get_root()
 leaf = sha256("a".encode())
 bad_leaf = sha256("x".encode())
-proof = tree.get_proof(leaf)
-tree.verify(proof, leaf, root)      # returns True
-tree.verify(proof, bad_leaf, root)  # returns False
-```
-
-### keccak256 (as implemented in the Solidity language)
-
-```py
-from merkletreepy import MerkleTree
-import Web3
-
-def hash_function(x):
-    return Web3.keccak(text=x).hex()
-
-leaves = [hash_function(leaf) for leaf in "abc"]
-tree = MerkleTree(leaves, sha256)
-root = tree.get_root()
-leaf = sha256("a")
-bad_leaf = sha256("x")
 proof = tree.get_proof(leaf)
 tree.verify(proof, leaf, root)      # returns True
 tree.verify(proof, bad_leaf, root)  # returns False
