@@ -4,8 +4,6 @@ from web3 import Web3
 import sys
 import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 
 def sha256(x):
     return hashlib.sha256(x).digest()
